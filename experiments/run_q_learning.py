@@ -1,60 +1,92 @@
+# experiments/run_q_learning.py
+
 import argparse
 import itertools
 import matplotlib.pyplot as plt
+import numpy as np
 
 from configs.grid_configs import QL_GRID, NUM_EPISODES, SEEDS
-from train_logic.trainer import experiment
+from environments.blackjack_env import make_env
 from agents.q_learning_agent import QLearningAgent
-from utils.plotting import plot_learning_curves
-
+from utils.metrics import compute_win_rate
+from train_logic.trainer import run_episode
 
 def main():
     """
-    Run Q-learning control experiments over hyperparameter grid or specific settings.
+    Run Q-Learning control with per-episode epsilon decay,
+    then plot the per-episode win rate (raw + smoothed).
     """
-    parser = argparse.ArgumentParser(description="Run Q-Learning Blackjack experiments.")
-    parser.add_argument('--alpha', type=float, help='Learning rate')
-    parser.add_argument('--gamma', type=float, help='Discount factor')
-    parser.add_argument('--epsilon', type=float, help='Exploration rate')
-    parser.add_argument('--show', action='store_true', help='Show plots interactively')
+    parser = argparse.ArgumentParser(
+        description="Run Q-Learning Blackjack experiments (win rate)."
+    )
+    parser.add_argument('--episodes',   type=int, default=NUM_EPISODES,
+                        help='Number of episodes per seed')
+    parser.add_argument('--num-seeds',  type=int, default=len(SEEDS),
+                        help='Number of independent runs (will use seeds 0..num_seeds-1)')
+    parser.add_argument('--alpha',      type=float, default=None,
+                        help='Learning rate override')
+    parser.add_argument('--gamma',      type=float, default=None,
+                        help='Discount factor override')
+    parser.add_argument('--show',       action='store_true',
+                        help='Show the plot interactively')
     args = parser.parse_args()
 
-    # Determine grid to use
-    if args.alpha is not None and args.gamma is not None and args.epsilon is not None:
+    # Hyperparameter grids or single values
+    if args.alpha is not None and args.gamma is not None:
         alphas = [args.alpha]
         gammas = [args.gamma]
-        epsilons = [args.epsilon]
     else:
         alphas = QL_GRID['alpha']
         gammas = QL_GRID['gamma']
-        epsilons = QL_GRID['epsilon']
 
-    # Loop through hyperparameter combinations
-    for alpha, gamma, epsilon in itertools.product(alphas, gammas, epsilons):
-        print(f"Running Q-Learning with alpha={alpha}, gamma={gamma}, epsilon={epsilon}")
-        agent_kwargs = {'alpha': alpha, 'gamma': gamma, 'epsilon': epsilon}
-        returns = experiment(
-            QLearningAgent,
-            num_episodes=NUM_EPISODES,
-            seeds=SEEDS,
-            **agent_kwargs
-        )
+    seeds    = list(range(args.num_seeds))
+    episodes = args.episodes
 
-        # Plot learning curve
+    for alpha, gamma in itertools.product(alphas, gammas):
+        print(f"\nRunning Q-Learning: episodes={episodes}, num_seeds={args.num_seeds}, "
+              f"α={alpha}, γ={gamma} (ε decayed 1→0.01)")
+
+        # Collect returns across seeds
+        all_returns = np.zeros((len(seeds), episodes))
+        for i, seed in enumerate(seeds):
+            env   = make_env(seed=seed)
+            agent = QLearningAgent(nA=2, alpha=alpha, gamma=gamma, epsilon=1.0)
+            ep_returns = []
+
+            for ep in range(episodes):
+                # Linearly decay ε from 1.0 to 0.01
+                agent.epsilon = max(0.01, 1.0 - ep/episodes)
+                G = run_episode(env, agent)
+                ep_returns.append(G)
+
+            all_returns[i, :] = ep_returns
+
+        # Compute per-episode win rate
+        win_rates = compute_win_rate(all_returns, axis=0)
+
+        # Smooth with moving average
+        window = 100
+        smooth = np.convolve(win_rates, np.ones(window)/window, mode='valid')
+        x = np.arange(window-1, episodes)
+
+        # Plot only raw & smoothed lines
         plt.figure(figsize=(8,4))
-        plot_learning_curves(returns, label=f"Q-Learning α={alpha}, γ={gamma}, ε={epsilon}")
-        plt.title('Q-Learning Control Learning Curve')
+        plt.plot(win_rates, alpha=0.2, label='Raw Win Rate')
+        plt.plot(x, smooth,  linewidth=2, label=f'Smoothed (w={window})')
+        plt.xlabel('Episode')
+        plt.ylabel('Win Rate')
+        plt.ylim(0,1)
+        plt.title(f'Q-Learning Win Rate over {episodes} Episodes\nα={alpha}, γ={gamma}')
+        plt.legend()
         plt.tight_layout()
 
-        # Save figure
-        filename = f"q_learning_alpha{alpha}_gamma{gamma}_eps{epsilon}.png"
-        plt.savefig(filename)
-        print(f"Saved plot to {filename}")
+        fname = f"q_learning_winrate_{episodes}eps_{args.num_seeds}seeds_alpha{alpha}_gamma{gamma}.png"
+        plt.savefig(fname)
+        print(f"Saved plot to {fname}")
 
         if args.show:
             plt.show()
         plt.close()
-
 
 if __name__ == '__main__':
     main()
