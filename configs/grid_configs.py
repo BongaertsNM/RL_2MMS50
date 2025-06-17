@@ -1,8 +1,8 @@
 # Hyperparameter grids for Blackjack RL experiments
 
 # Common settings
-NUM_EPISODES = 50000
-SEEDS = list(range(30))
+NUM_EPISODES = 10000
+SEEDS = list(range(5))
 
 # TD0 prediction hyperparameters
 TD0_GRID = {
