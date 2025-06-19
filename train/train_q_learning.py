@@ -59,10 +59,10 @@ def main():
                 ep_returns.append(G)
             all_returns[i, :] = ep_returns
 
-            # Save this seed’s Q-table
+            # Save this seed’s Q-table (convert to plain dict for pickling)
             fname = f"models/q_learning_alpha{alpha}_gamma{gamma}_seed{seed}.pkl"
             with open(fname, 'wb') as f:
-                pickle.dump(agent.Q, f)
+                pickle.dump(dict(agent.Q), f)
             print(f"  Saved Q-table to {fname}")
 
         # Plot learning curve (win rate)
