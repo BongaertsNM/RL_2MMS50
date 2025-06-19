@@ -16,6 +16,7 @@ from agents.sarsa_agent import SARSAgent
 from train_logic.trainer import run_episode
 from utils.metrics import compute_win_rate
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Train tabular SARSA on Blackjack"
@@ -41,7 +42,11 @@ def main():
     seeds    = list(range(args.num_seeds))
     episodes = args.episodes
 
-    os.makedirs('models', exist_ok=True)
+    # Prepare directories
+    model_dir   = os.path.join('models', 'models_sarsa')
+    results_dir = os.path.join('results', 'results_sarsa')
+    os.makedirs(model_dir, exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
 
     for alpha, gamma in itertools.product(alphas, gammas):
         print(f"\nTraining SARSA: α={alpha}, γ={gamma}, seeds={len(seeds)}, eps={episodes}")
@@ -59,13 +64,17 @@ def main():
 
             all_returns[i, :] = ep_returns
 
-            # Save this seed's Q-table
-            fname = f"models/sarsa_q_alpha{alpha}_gamma{gamma}_seed{seed}.pkl"
-            with open(fname, 'wb') as f:
-                pickle.dump(agent.Q, f)
-            print(f"  Saved Q-table to {fname}")
+            # Save only seed 0's Q-table for this (alpha, gamma) config
+            if i == 0:
+                model_path = os.path.join(
+                    model_dir,
+                    f"sarsa_q_alpha{alpha}_gamma{gamma}_seed{seed}.pkl"
+                )
+                with open(model_path, 'wb') as f:
+                    pickle.dump(dict(agent.Q), f)
+                print(f"  Saved Q-table for seed {seed} to {model_path}")
 
-        # Plot learning curve
+        # Plot learning curve (win rate)
         win_rates = compute_win_rate(all_returns, axis=0)
         window    = 100
         smooth    = np.convolve(win_rates, np.ones(window)/window, mode='valid')
@@ -73,17 +82,21 @@ def main():
 
         plt.figure(figsize=(8,4))
         plt.plot(win_rates, alpha=0.2, label='Raw Win Rate')
-        plt.plot(x, smooth,      linewidth=2, label=f'Smoothed (w={window})')
+        if len(smooth) == len(x):
+            plt.plot(x, smooth, linewidth=2, label=f'Smoothed (w={window})')
         plt.xlabel('Episode')
         plt.ylabel('Win Rate')
         plt.ylim(0,1)
         plt.title(f"SARSA Win Rate (α={alpha}, γ={gamma})")
         plt.legend()
         plt.tight_layout()
-        plot_fname = f"sarsa_winrate_{episodes}eps_seeds{len(seeds)}_a{alpha}_g{gamma}.png"
-        plt.savefig(plot_fname)
-        print(f"  Saved curve to {plot_fname}")
+
+        plot_fname = f"sarsa_winrate_{episodes}eps_{len(seeds)}seeds_a{alpha}_g{gamma}.png"
+        out_path   = os.path.join(results_dir, plot_fname)
+        plt.savefig(out_path)
+        print(f"  Saved curve to {out_path}")
         plt.close()
+
 
 if __name__ == '__main__':
     main()

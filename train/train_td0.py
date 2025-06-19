@@ -45,7 +45,11 @@ def main():
     seeds    = list(range(args.num_seeds))
     episodes = args.episodes
 
-    os.makedirs('models', exist_ok=True)
+    # Prepare directories for models and results
+    model_dir   = os.path.join('models',  'models_td0')
+    results_dir = os.path.join('results', 'results_td0')
+    os.makedirs(model_dir,   exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
 
     for alpha, gamma, thresh in itertools.product(alphas, gammas, thresholds):
         print(f"\nTraining TD(0): α={alpha}, γ={gamma}, θ={thresh}, seeds={len(seeds)}, eps={episodes}")
@@ -60,13 +64,17 @@ def main():
                 ep_returns.append(G)
             all_returns[i, :] = ep_returns
 
-            # save this seed's V-table
-            fname = f"models/td0_alpha{alpha}_gamma{gamma}_th{thresh}_seed{seed}.pkl"
-            with open(fname, 'wb') as f:
-                pickle.dump(agent.V, f)
-            print(f"  Saved V-table to {fname}")
+            # Only save seed 0's V-table
+            if i == 0:
+                model_path = os.path.join(
+                    model_dir,
+                    f"td0_alpha{alpha}_gamma{gamma}_th{thresh}_seed{seed}.pkl"
+                )
+                with open(model_path, 'wb') as f:
+                    pickle.dump(agent.V, f)
+                print(f"  Saved V-table for seed {seed} to {model_path}")
 
-        # plot win-rate curve
+        # Plot win-rate curve
         win_rates = compute_win_rate(all_returns, axis=0)
         window    = 100
         smooth    = np.convolve(win_rates, np.ones(window)/window, mode='valid')
@@ -74,7 +82,7 @@ def main():
 
         plt.figure(figsize=(8,4))
         plt.plot(win_rates, alpha=0.2, label='Raw Win Rate')
-        if len(smooth)==len(x):
+        if len(smooth) == len(x):
             plt.plot(x, smooth, linewidth=2, label=f'Smoothed (w={window})')
         plt.xlabel('Episode')
         plt.ylabel('Win Rate')
@@ -82,9 +90,11 @@ def main():
         plt.title(f"TD(0) Win Rate (α={alpha}, γ={gamma}, θ={thresh})")
         plt.legend()
         plt.tight_layout()
-        plot_fname = f"td0_winrate_{episodes}eps_seed{len(seeds)}_a{alpha}_g{gamma}_th{thresh}.png"
-        plt.savefig(plot_fname)
-        print(f"  Saved curve to {plot_fname}")
+
+        plot_fname = f"td0_winrate_{episodes}eps_{len(seeds)}seeds_a{alpha}_g{gamma}_th{thresh}.png"
+        out_path   = os.path.join(results_dir, plot_fname)
+        plt.savefig(out_path)
+        print(f"  Saved curve to {out_path}")
         plt.close()
 
 if __name__ == '__main__':

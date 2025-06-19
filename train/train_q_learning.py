@@ -30,7 +30,7 @@ def main():
                         help='Discount factor override')
     args = parser.parse_args()
 
-    # Hyperparameter lists
+    # Build hyperparameter lists
     if args.alpha is not None and args.gamma is not None:
         alphas = [args.alpha]
         gammas = [args.gamma]
@@ -41,8 +41,11 @@ def main():
     seeds    = list(range(args.num_seeds))
     episodes = args.episodes
 
-    # Ensure models/ directory exists
-    os.makedirs('models', exist_ok=True)
+    # Prepare directories
+    model_dir   = os.path.join('models',  'models_q_learning')
+    results_dir = os.path.join('results', 'results_q_learning')
+    os.makedirs(model_dir,   exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
 
     for alpha, gamma in itertools.product(alphas, gammas):
         print(f"\nTraining Q-Learning: α={alpha}, γ={gamma}, seeds={len(seeds)}, eps={episodes}")
@@ -59,18 +62,23 @@ def main():
                 ep_returns.append(G)
             all_returns[i, :] = ep_returns
 
-            # Save this seed’s Q-table (convert to plain dict for pickling)
-            fname = f"models/q_learning_alpha{alpha}_gamma{gamma}_seed{seed}.pkl"
-            with open(fname, 'wb') as f:
-                pickle.dump(dict(agent.Q), f)
-            print(f"  Saved Q-table to {fname}")
+            # Save only seed 0's Q-table for this (alpha, gamma)
+            if i == 0:
+                model_path = os.path.join(
+                    model_dir,
+                    f"q_learning_alpha{alpha}_gamma{gamma}_seed{seed}.pkl"
+                )
+                with open(model_path, 'wb') as f:
+                    pickle.dump(dict(agent.Q), f)
+                print(f"  Saved Q-table for seed {seed} to {model_path}")
 
-        # Plot learning curve (win rate)
+        # Compute win rates and smooth
         win_rates = compute_win_rate(all_returns, axis=0)
         window    = 100
         smooth    = np.convolve(win_rates, np.ones(window)/window, mode='valid')
         x         = np.arange(window-1, episodes)
 
+        # Plot learning curve (win rate)
         plt.figure(figsize=(8,4))
         plt.plot(win_rates, alpha=0.2, label='Raw Win Rate')
         if len(smooth) == len(x):
@@ -81,9 +89,12 @@ def main():
         plt.title(f"Q-Learning Win Rate (α={alpha}, γ={gamma})")
         plt.legend()
         plt.tight_layout()
+
+        # Save plot into results/results_q_learning
         plot_fname = f"q_learning_winrate_{episodes}eps_{len(seeds)}seeds_a{alpha}_g{gamma}.png"
-        plt.savefig(plot_fname)
-        print(f"  Saved curve to {plot_fname}")
+        out_path   = os.path.join(results_dir, plot_fname)
+        plt.savefig(out_path)
+        print(f"  Saved curve to {out_path}")
         plt.close()
 
 if __name__ == '__main__':

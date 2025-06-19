@@ -1,6 +1,7 @@
 # experiments/evaluate_q_learning.py
 
 import argparse
+import os
 import pickle
 import numpy as np
 
@@ -32,20 +33,38 @@ def evaluate(q_table, num_trials=1000):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Evaluate a trained Q-Learning Q-table on Blackjack"
+        description="Evaluate all Q-Learning models on Blackjack"
     )
-    parser.add_argument('--model',  required=True,
-                        help="Path to Q-table pickle, e.g. models/q_learning_alpha0.1_gamma1.0_seed0.pkl")
-    parser.add_argument('--trials', type=int, default=1000,
-                        help="Number of episodes for evaluation")
+    parser.add_argument(
+        '--trials', type=int, default=1000,
+        help="Number of episodes per model for evaluation"
+    )
     args = parser.parse_args()
 
-    # Load Q-table
-    with open(args.model, 'rb') as f:
-        Q = pickle.load(f)
+    model_dir = os.path.join('models', 'models_q_learning')
+    results_dir = os.path.join('results', 'results_q_learning')
+    os.makedirs(results_dir, exist_ok=True)
 
-    success_rate = evaluate(Q, num_trials=args.trials)
-    print(f"Success rate over {args.trials} trials: {success_rate:.3f}")
+    model_files = sorted(f for f in os.listdir(model_dir) if f.endswith('.pkl'))
+    if not model_files:
+        print(f"No model files found in {model_dir}")
+        return
+
+    for fname in model_files:
+        model_path = os.path.join(model_dir, fname)
+        # load Q-table
+        with open(model_path, 'rb') as f:
+            Q = pickle.load(f)
+
+        # evaluate
+        win_rate = evaluate(Q, num_trials=args.trials)
+
+        # write result
+        base = os.path.splitext(fname)[0]
+        out_txt = os.path.join(results_dir, f"{base}_winrate.txt")
+        with open(out_txt, 'w') as f:
+            f.write(f"{win_rate:.4f}\n")
+        print(f"Evaluated {fname}: win rate={win_rate:.4f} → {out_txt}")
 
 if __name__ == '__main__':
     main()
