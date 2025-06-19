@@ -115,31 +115,47 @@ RL_2MMS50/
 
 ## 📈 Training & Evaluation
 
-- **Train** each agent:
+### Atari agents (single-seed)
 
-  ```bat
-  python -m train.train_<agent> [--episodes N] [--lr LR] [--gamma GAMMA] [--render]
-  ```
+All Atari training scripts default to seed `0` and use an explicit `--env-id`:
 
-  Models saved under `models/models_<agent>/` and plots under `results/results_<agent>/`.
+```bat
+python -m train.train_<agent> \
+    --env-id ALE/Boxing-v5 --episodes 100 [--lr 1e-4] [--gamma 0.99] [--render]
+```
 
-- **Evaluate** each trained agent:
+- **Saved model** → `models/models_<agent>/<agent>_<env_id>_seed0.pth`
+- **Rewards plot** → `results/results_<agent>/<agent>_<env_id>_<episodes>eps_seed0.png`
 
-  ```bat
-  python -m evaluate.evaluate_<agent> --model <path> [--env-id <ID>] [--trials N]
-  ```
+Batch evaluation over all Atari models:
 
-  Win rates saved as `.txt` files in `results/results_<agent>/` when run in batch mode.
+```bat
+python -m evaluate.evaluate_<agent> --env-id ALE/Boxing-v5 --trials 500
+```
 
-Use `-h` on any script for detailed options.
+This will scan `models/models_<agent>/`, evaluate each `.pth`, and write `<model_basename>_winrate.txt` in `results/results_<agent>/`.
+
+### Blackjack agents (multi-seed)
+
+Blackjack scripts run over multiple seeds and hyperparameters:
+
+```bat
+python -m train.train_<agent> --episodes 10000 --num-seeds 5 [--alpha 0.1] [--gamma 0.9]
+```
+
+- Only **seed 0** model is saved per `(α,γ)`:
+  - Q-table → `models/models_<agent>/<agent>_alpha<α>_gamma<γ>_seed0.pkl`
+- **Win-rate curve** (across seeds) → `results/results_<agent>/<agent>_winrate_<episodes>eps_<seeds>seeds_a<α>_g<γ>.png`
+
+Batch evaluation over all Blackjack models:
+
+```bat
+python -m evaluate.evaluate_<agent> --trials 1000
+```
+
+Automatically scans `models/models_<agent>/`, evaluates each `.pkl`, and writes `<model_basename>_winrate.txt` into `results/results_<agent>/`.
 
 ---
 
-## 📚 Acknowledgments
-
-- **Gymnasium** & **ALE-py** for environments
-- **PyTorch** for deep learning
-- Course assignment & guidance by teaching staff
-
-Happy Reinforcement Learning! 🎉
+Use `-h` on any script to see full argument list and defaults.
 
