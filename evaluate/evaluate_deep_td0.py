@@ -58,7 +58,7 @@ def main():
         help="Gymnasium env ID (e.g. ALE/Boxing-v5)"
     )
     parser.add_argument(
-        '--trials', type=int, default=500,
+        '--trials', type=int, default=100,
         help="Number of episodes per model for evaluation"
     )
     args = parser.parse_args()

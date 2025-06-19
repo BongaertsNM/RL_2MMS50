@@ -1,6 +1,6 @@
 DQN_CONFIG = {
     "env_id": "ALE/Boxing-v5",  # or another valid ALE env you installed via AutoROM
-    "num_episodes": 10,
+    "num_episodes": 100,
     "seeds": [0],
     "lr": 1e-4,
     "gamma": 0.99,
@@ -16,7 +16,7 @@ DQN_CONFIG = {
 
 TD0_CONFIG = {
     "env_id": "ALE/Boxing-v5",
-    "num_episodes": 1,
+    "num_episodes": 100,
     "seeds": [0],
     "gamma": 0.99,
     "epsilon_start": 1.0,

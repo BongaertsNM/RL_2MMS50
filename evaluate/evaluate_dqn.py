@@ -9,7 +9,7 @@ from agents.dqn_agent import DQNAgent
 from environments.atari_env import make_atari_env
 from configs.atari_configs import DQN_CONFIG
 
-def evaluate(model_path, env_id, num_trials=500):
+def evaluate(model_path, env_id, num_trials=100):
     """
     Load the DQNAgent policy_net from model_path,
     then run num_trials episodes greedily and return
@@ -51,7 +51,7 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate all trained DQN models")
     parser.add_argument('--env-id', type=str, default=DQN_CONFIG['env_id'],
                         help="Gymnasium env ID (e.g. ALE/Boxing-v5)")
-    parser.add_argument('--trials', type=int, default=500,
+    parser.add_argument('--trials', type=int, default=100,
                         help="Number of episodes per model for evaluation")
     args = parser.parse_args()
 
