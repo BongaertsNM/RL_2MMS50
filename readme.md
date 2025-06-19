@@ -1,102 +1,145 @@
-# Blackjack RL Project
+# RL\_2MMS50
 
-A modular framework for running reinforcement learning experiments on the Gymnasium Blackjack environment. This repository implements three classic RL agents—TD(0) prediction, Q-Learning, and SARSA—along with training loops, evaluation utilities, and easy-to-use scripts.
+A collection of reinforcement‑learning agents (tabular & deep) implemented for **Blackjack** and **Atari** games. This repository provides scripts to train and evaluate various agents:
 
-## Project Structure
+- **Tabular agents** for Blackjack: Q‑learning, SARSA, TD(0).
+- **Deep agents** for Atari: DQN, Deep SARSA, Deep TD(0).
 
-```
-RL_blackjack/
-├── agents/                 # Agent implementations
-│   ├── base_agent.py       # Abstract Agent class
-│   ├── td0_agent.py        # TD(0) prediction agent
-│   ├── q_learning_agent.py # Off-policy Q-Learning agent
-│   ├── sarsa_agent.py      # On-policy SARSA agent
-│   └── __init__.py
-│
-├── environments/           # Environment factory
-│   ├── blackjack_env.py    # Gymnasium Blackjack env setup and seeding
-│   └── __init__.py
-│
-├── train_logic/            # Core training routines
-│   ├── trainer.py          # `run_episode` and `experiment`
-│   └── __init__.py
-│
-├── utils/                  # Helpers for plotting & metrics
-│   ├── plotting.py         # Learning-curve plotting
-│   ├── metrics.py          # Win rates and confidence intervals
-│   └── __init__.py
-│
-├── experiments/            # Scripts to run each agent
-│   ├── run_td_experiment.py
-│   ├── run_q_learning.py
-│   ├── run_sarsa.py
-│   └── __init__.py
-│
-├── evaluation_metrics.py   # Summarize saved returns arrays
-├── train_main.py           # Unified CLI for all experiments
-├── requirements.txt        # Python dependencies
-└── README.md               # This document
-```
+---
 
-## Installation
+## 🚀 Quickstart
 
-1. Create a Python virtual environment (e.g., `venv` or `conda`).
-2. Install dependencies:
-   ```bash
+1. **Clone** this repository and `cd` into it:
+
+   ```bat
+   git clone <repo_url>
+   cd RL_2MMS50
+   ```
+
+2. **Optional:** create and activate a virtual environment:
+
+   ```bat
+   python -m venv .venv
+   .\.venv\Scripts\activate.bat
+   python -m pip install --upgrade pip setuptools wheel
+   ```
+
+3. **Install core Python dependencies**:
+
+   ```bat
    pip install -r requirements.txt
    ```
 
-## Usage
+4. **Install GPU‑enabled PyTorch** (if available):
 
-### Unified CLI
+   ```bat
+   pip install --extra-index-url https://download.pytorch.org/whl/cu121 \
+       torch==2.5.1+cu121 \
+       torchvision==0.20.1+cu121 \
+       torchaudio==2.5.1+cu121
+   ```
 
-Use `train_main.py` to run any experiment:
+5. **Accept Atari ROM license** (required for Gymnasium/ALE):
 
-```bash
-python train_main.py <command> [options]
+   ```bat
+   python -m autorom --accept-license
+   ```
+
+6. **Run all training & evaluation** via batch script:
+
+   ```bat
+   .\run_all.bat
+   ```
+
+   This executes all train & evaluate modules in sequence.
+
+---
+
+## 📂 Directory Structure
+
+```
+RL_2MMS50/
+├── agents/                # Agent implementations (tabular & deep)
+│   ├── q_learning_agent.py
+│   ├── sarsa_agent.py
+│   ├── td0_agent.py
+│   ├── dqn_agent.py
+│   ├── deep_sarsa_agent.py
+│   └── deep_td0_agent.py
+├── configs/               # Hyperparameter configs
+│   ├── grid_configs.py
+│   └── atari_configs.py
+├── environments/          # Gym wrappers
+│   ├── blackjack_env.py
+│   └── atari_env.py
+├── train_logic/           # Shared training loops
+│   ├── trainer.py
+│   ├── dqn_trainer.py
+│   ├── deep_sarsa_trainer.py
+│   ├── deep_td0_trainer.py
+│   └── ...
+├── train/                 # `python -m train.*` entry scripts
+│   ├── train_q_learning.py
+│   ├── train_sarsa.py
+│   ├── train_td0.py
+│   ├── train_dqn.py
+│   ├── train_deep_sarsa.py
+│   └── train_deep_td0.py
+├── evaluate/              # `python -m evaluate.*` entry scripts
+│   ├── evaluate_q_learning.py
+│   ├── evaluate_sarsa.py
+│   ├── evaluate_td0.py
+│   ├── evaluate_dqn.py
+│   ├── evaluate_deep_sarsa.py
+│   └── evaluate_deep_td0.py
+├── models/                # Trained models by category
+│   ├── models_q_learning/
+│   ├── models_sarsa/
+│   ├── models_td0/
+│   ├── models_dqn/
+│   ├── models_deep_sarsa/
+│   └── models_deep_td0/
+├── results/               # Plots & evaluation outputs
+│   ├── results_q_learning/
+│   ├── results_sarsa/
+│   ├── results_td0/
+│   ├── results_dqn/
+│   ├── results_deep_sarsa/
+│   └── results_deep_td0/
+├── requirements.txt       # Python dependencies
+├── run_all.bat            # Batch script to run all
+└── README.md              # This file
 ```
 
-Available commands:
-- `td`       : TD(0) prediction experiment
-- `qlearning`: Q-Learning control experiment
-- `sarsa`    : SARSA control experiment
+---
 
-Each command supports optional flags to override the default hyperparameters:
-- `--alpha <float>`      : Learning rate (default 0.1)
-- `--gamma <float>`      : Discount factor (default 1.0)
-- `--epsilon <float>`    : Exploration rate (only for Q-Learning/SARSA, default 0.1)
-- `--threshold <int>`    : Stick threshold (only for TD(0), default 20)
-- `--show`               : Display the learning curve interactively
+## 📈 Training & Evaluation
 
-Example:
-```bash
-python train_main.py qlearning --alpha 0.05 --gamma 0.99 --epsilon 0.05 --show
-```
+- **Train** each agent:
 
-### Direct Scripts
-
-You can also invoke each script directly:
-```bash
-python experiments/run_td_experiment.py [--alpha ALPHA] [--gamma GAMMA] [--threshold THRESHOLD] [--show]
-python experiments/run_q_learning.py [--alpha ALPHA] [--gamma GAMMA] [--epsilon EPSILON] [--show]
-python experiments/run_sarsa.py [--alpha ALPHA] [--gamma GAMMA] [--epsilon EPSILON] [--show]
-```
-
-## Outputs and Analysis
-
-- Plots: Each run saves a PNG file named according to the algorithm and parameter values (e.g., `q_learning_alpha0.1_gamma1.0_eps0.1.png`).
-- Return Arrays: You can modify scripts to save episode returns as `.npy` files for offline analysis.
-- Summary CLI: Use `evaluation_metrics.py` to load a saved returns array and print summary statistics:
-  ```bash
-  python evaluation_metrics.py path/to/returns.npy
+  ```bat
+  python -m train.train_<agent> [--episodes N] [--lr LR] [--gamma GAMMA] [--render]
   ```
 
-## Customization
+  Models saved under `models/models_<agent>/` and plots under `results/results_<agent>/`.
 
-- To change default parameters, edit the agent constructors in `agents/` or pass flags at runtime.
-- For advanced logging or metrics, modify `utils/plotting.py`, `utils/metrics.py`, or `evaluation_metrics.py`.
+- **Evaluate** each trained agent:
 
-## License
+  ```bat
+  python -m evaluate.evaluate_<agent> --model <path> [--env-id <ID>] [--trials N]
+  ```
 
-This project is licensed under the MIT License.
+  Win rates saved as `.txt` files in `results/results_<agent>/` when run in batch mode.
+
+Use `-h` on any script for detailed options.
+
+---
+
+## 📚 Acknowledgments
+
+- **Gymnasium** & **ALE-py** for environments
+- **PyTorch** for deep learning
+- Course assignment & guidance by teaching staff
+
+Happy Reinforcement Learning! 🎉
 
