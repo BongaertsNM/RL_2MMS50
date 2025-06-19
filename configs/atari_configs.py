@@ -16,7 +16,7 @@ DQN_CONFIG = {
 
 TD0_CONFIG = {
     "env_id": "ALE/Boxing-v5",
-    "num_episodes": 1000,
+    "num_episodes": 1,
     "seeds": [0],
     "gamma": 0.99,
     "epsilon_start": 1.0,

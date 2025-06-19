@@ -2,6 +2,7 @@
 
 import argparse
 import os
+
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -38,11 +39,20 @@ def main():
     if args.gamma is not None:
         config['gamma'] = args.gamma
 
-    # Ensure models/ exists (trainer will save the trained model)
-    os.makedirs('models', exist_ok=True)
+    # Prepare output directories
+    model_dir   = os.path.join('models',  'models_dqn')
+    results_dir = os.path.join('results', 'results_dqn')
+    os.makedirs(model_dir,   exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
 
     # Train
     all_returns, agents = train_dqn(config)
+
+    # Save the trained model (policy network) for seed 0
+    agent = agents[0]
+    model_path = os.path.join(model_dir, f"dqn_{args.env_id.replace('/', '_')}_seed0.pth")
+    torch.save(agent.policy_net.state_dict(), model_path)
+    print(f"Saved model to {model_path}")
 
     # Extract the single seed's returns
     returns = all_returns[0]  # shape (episodes,)
@@ -56,9 +66,10 @@ def main():
     plt.legend()
     plt.tight_layout()
 
-    outname = f"dqn_returns_{args.episodes}eps_seed0.png"
-    plt.savefig(outname)
-    print(f"Saved episodic return plot to {outname}")
+    outname = f"dqn_returns_{args.env_id.replace('/', '_')}_{args.episodes}eps_seed0.png"
+    outpath = os.path.join(results_dir, outname)
+    plt.savefig(outpath)
+    print(f"Saved episodic return plot to {outpath}")
     plt.close()
 
 if __name__ == '__main__':

@@ -1,8 +1,9 @@
 # experiments/evaluate_dqn.py
 
 import argparse
-import numpy as np
+import os
 import torch
+import numpy as np
 
 from agents.dqn_agent import DQNAgent
 from environments.atari_env import make_atari_env
@@ -47,16 +48,31 @@ def evaluate(model_path, env_id, num_trials=500):
     return successes / num_trials
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate trained DQN model")
-    parser.add_argument('--model',   required=True,
-                        help="Path to .pth file, e.g. models/dqn_seed0.pth")
-    parser.add_argument('--env-id',  type=str, default=DQN_CONFIG['env_id'])
-    parser.add_argument('--trials',  type=int, default=500,
-                        help="Number of episodes for evaluation")
+    parser = argparse.ArgumentParser(description="Evaluate all trained DQN models")
+    parser.add_argument('--env-id', type=str, default=DQN_CONFIG['env_id'],
+                        help="Gymnasium env ID (e.g. ALE/Boxing-v5)")
+    parser.add_argument('--trials', type=int, default=500,
+                        help="Number of episodes per model for evaluation")
     args = parser.parse_args()
 
-    sr = evaluate(args.model, args.env_id, num_trials=args.trials)
-    print(f"Success rate over {args.trials} trials: {sr:.3f}")
+    model_dir   = os.path.join('models', 'models_dqn')
+    results_dir = os.path.join('results', 'results_dqn')
+    os.makedirs(results_dir, exist_ok=True)
+
+    model_files = sorted(f for f in os.listdir(model_dir) if f.endswith('.pth'))
+    if not model_files:
+        print(f"No DQN model files found in {model_dir}")
+        return
+
+    for fname in model_files:
+        model_path = os.path.join(model_dir, fname)
+        win_rate = evaluate(model_path, args.env_id, num_trials=args.trials)
+
+        base   = os.path.splitext(fname)[0]
+        out_txt = os.path.join(results_dir, f"{base}_winrate.txt")
+        with open(out_txt, 'w') as f:
+            f.write(f"{win_rate:.4f}\n")
+        print(f"Evaluated {fname}: success rate={win_rate:.4f} → {out_txt}")
 
 if __name__ == '__main__':
     main()

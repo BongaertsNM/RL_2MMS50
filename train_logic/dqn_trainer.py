@@ -65,11 +65,6 @@ def train_dqn(config):
             all_returns[i, ep] = ep_return
             print(f"  Seed {i+1}, Episode {ep+1}/{num_episodes} — Return: {ep_return:.2f}")
 
-        # Save this seed’s trained policy network
-        model_path = f"models/dqn_seed{seed}.pth"
-        torch.save(agent.policy_net.state_dict(), model_path)
-        print(f"Saved model to {model_path}")
-
         trained_agents.append(agent)
 
     return all_returns, trained_agents
