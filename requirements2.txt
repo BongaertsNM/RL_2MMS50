@@ -1,7 +1,0 @@
-numpy==1.26.4
-matplotlib==3.8.3
-torch==2.5.1+cu121
-gymnasium==0.28.1
-ale-py==0.8.1
-AutoROM==0.6.1
-Shimmy==0.2.1

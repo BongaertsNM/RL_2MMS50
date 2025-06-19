@@ -1,0 +1,24 @@
+numpy==1.26.4
+matplotlib==3.8.3
+
+# ALE + Gymnasium
+gymnasium[accept-rom-license]==0.28.1
+ale-py==0.8.1
+Shimmy==0.2.1
+autorom==0.4.2
+
+# You also need torch and gpu build:
+
+# python -m venv .venv
+# .\.venv\Scripts\activate.bat
+# python -m pip install --upgrade pip setuptools wheel
+
+# pip install -r requirements.txt
+
+# REM now install the CUDA-enabled builds:
+# pip install --extra-index-url https://download.pytorch.org/whl/cu121 ^
+#     torch==2.5.1+cu121 ^
+#     torchvision==0.20.1+cu121 ^
+#     torchaudio==2.5.1+cu121
+
+# python -m autorom --accept-license
