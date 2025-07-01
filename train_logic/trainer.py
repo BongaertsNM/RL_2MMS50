@@ -39,36 +39,3 @@ def run_episode(env, agent):
             break
 
     return total_reward
-
-
-def experiment(agent_class, env_name='Blackjack-v1', num_episodes=50000,
-               seeds=None, **agent_kwargs):
-    """
-    Run multiple independent experiment runs for a given agent.
-
-    Args:
-        agent_class: Agent class to instantiate.
-        env_name (str): Gymnasium env ID.
-        num_episodes (int): Episodes per run.
-        seeds (list[int], optional): Random seeds for each run.
-        agent_kwargs: Parameters to pass to agent constructor.
-
-    Returns:
-        all_returns (np.ndarray): shape (n_runs, num_episodes) of episode returns.
-    """
-    if seeds is None:
-        seeds = list(range(30))
-
-    n_runs = len(seeds)
-    all_returns = np.zeros((n_runs, num_episodes))
-
-    for i, seed in enumerate(seeds):
-        env = make_env(env_name, seed)
-        agent = agent_class(**agent_kwargs)
-        returns = []
-        for ep in range(num_episodes):
-            G = run_episode(env, agent)
-            returns.append(G)
-        all_returns[i, :] = returns
-
-    return all_returns
